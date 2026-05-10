@@ -25,12 +25,12 @@ class TTSEnum(Enum):
 class TTSDefinitions:
     class ResourceFolderExistsChecker(ConfigValueConstraint[str]):
         def __init__(self) -> None:
-            super().__init__(f"Selected folder must contain subfolder '\\resources\\'!")
+            super().__init__("Selected folder must contain subfolder 'resources'!")
 
         def apply_constraint(self, value_to_apply_to: str) -> ConfigValueConstraintResult:
-            if not os.path.exists(f"{value_to_apply_to}\\resources\\"):
-                return ConfigValueConstraintResult(f'''
-The selected folder for xVASynth is missing the expected subfolder '\\resources\\'. 
+            if not os.path.isdir(os.path.join(value_to_apply_to, "resources")):
+                return ConfigValueConstraintResult('''
+The selected folder for xVASynth is missing the expected subfolder 'resources'.
 If you have trouble installing the xVASynth version from Nexus, try installing it from Steam.''')
             else:
                 return ConfigValueConstraintResult()
