@@ -58,4 +58,8 @@ class http_server:
         logger.log(25, 'https://art-from-the-machine.github.io/Mantella/pages/issues_qna')
         logger.log(24, '\nWaiting for player to select an NPC...')
     
-        uvicorn.run(self.__app, port=port)
+        # Bind on 0.0.0.0 so the mod can reach the server over LAN
+        # (e.g. Skyrim running on a different machine — Android handheld via
+        # GameHub Wine — pointing its HttpHost at the server's LAN IP).
+        # 127.0.0.1-only installs still work because 0.0.0.0 includes loopback.
+        uvicorn.run(self.__app, host="0.0.0.0", port=port)
