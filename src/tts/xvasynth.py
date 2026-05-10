@@ -67,22 +67,61 @@ class xVASynth(TTSable):
             self._merge_audio_files(voiceline_files, final_voiceline_file)
     
 
+    # Default fallback chains used when the NPC's CSV voice_model is missing
+    # on disk. Order: most generic first. 0 = male, 1 = female in Skyrim's
+    # actor base sex convention. Unknown gender → try both.
+    _FALLBACK_CHAIN_MALE = ['MaleNord', 'MaleEvenToned', 'MaleSoldier']
+    _FALLBACK_CHAIN_FEMALE = ['FemaleEvenToned']
+    _FALLBACK_CHAIN_UNKNOWN = ['MaleNord', 'FemaleEvenToned', 'MaleEvenToned']
+
+    def _resolve_voice_with_fallback(self, voice: str, xvasynth_acronym: str, voice_gender: int | None, nexus_link: str) -> str:
+        """Returns the on-disk voice_path (without extension) for the requested
+        voice model, or for the closest fallback by gender if the requested
+        model is not installed. Raises VoiceModelNotFound if every candidate
+        is missing.
+        """
+        def _path_for(model_name: str) -> str:
+            return f"{self.__model_path}{xvasynth_acronym}{model_name.lower().replace(' ', '')}"
+
+        primary_path = _path_for(voice)
+        if os.path.exists(primary_path + '.json'):
+            return primary_path
+
+        if voice_gender == 0:
+            chain = self._FALLBACK_CHAIN_MALE
+        elif voice_gender == 1:
+            chain = self._FALLBACK_CHAIN_FEMALE
+        else:
+            chain = self._FALLBACK_CHAIN_UNKNOWN
+
+        for fallback_name in chain:
+            fallback_path = _path_for(fallback_name)
+            if os.path.exists(fallback_path + '.json'):
+                logger.warning(
+                    f"xVASynth voice model '{xvasynth_acronym}{voice.lower().replace(' ', '')}' not installed — "
+                    f"using fallback '{xvasynth_acronym}{fallback_name.lower()}' (voice_gender={voice_gender})."
+                )
+                return fallback_path
+
+        logger.error(
+            f"Voice model does not exist in location '{primary_path}' and no fallback "
+            f"({chain}) is installed either. Download the model from {nexus_link} "
+            f"(Ctrl+F for '{xvasynth_acronym}{voice.lower().replace(' ', '')}')."
+        )
+        raise VoiceModelNotFound()
+
     @utils.time_it
     def change_voice(self, voice: str, in_game_voice: str | None = None, csv_in_game_voice: str | None = None, advanced_voice_model: str | None = None, voice_accent: str | None = None, voice_gender: int | None = None, voice_race: str | None = None):
         logger.log(self._loglevel, 'Loading voice model...')
- 
+
         # this is a game check for Fallout4/Skyrim to correctly search the XVASynth voice models for the right game.
         if self._game.base_game == GameEnum.FALLOUT4:
             XVASynthAcronym="f4_"
             XVASynthModNexusLink="https://www.nexusmods.com/fallout4/mods/49340?tab=files"
         else:
             XVASynthAcronym="sk_"
-            XVASynthModNexusLink = "https://www.nexusmods.com/skyrimspecialedition/mods/44184?tab=files"            
-        voice_path = f"{self.__model_path}{XVASynthAcronym}{voice.lower().replace(' ', '')}"
-
-        if not os.path.exists(voice_path+'.json'):
-            logger.error(f"Voice model does not exist in location '{voice_path}'. Please ensure that the correct path has been set in config.ini (xvasynth_folder) and that the model has been downloaded from {XVASynthModNexusLink} (Ctrl+F for '{XVASynthAcronym}{voice.lower().replace(' ', '')}').")
-            raise VoiceModelNotFound()
+            XVASynthModNexusLink = "https://www.nexusmods.com/skyrimspecialedition/mods/44184?tab=files"
+        voice_path = self._resolve_voice_with_fallback(voice, XVASynthAcronym, voice_gender, XVASynthModNexusLink)
 
         with open(voice_path+'.json', 'r', encoding='utf-8') as f:
             voice_model_json = json.load(f)
@@ -345,10 +384,7 @@ class xVASynth(TTSable):
             XVASynthAcronym="sk_"
             XVASynthModNexusLink = "https://www.nexusmods.com/skyrimspecialedition/mods/44184?tab=files"
             #voice='malenord'
-        voice_path = f"{self.__model_path}{XVASynthAcronym}{voice.lower().replace(' ', '')}"
-        if not os.path.exists(voice_path+'.json'):
-            logger.error(f"Voice model does not exist in location '{voice_path}'. Please ensure that the correct path has been set in config.ini (xvasynth_folder) and that the model has been downloaded from {XVASynthModNexusLink} (Ctrl+F for '{XVASynthAcronym}{voice.lower().replace(' ', '')}').")
-            raise VoiceModelNotFound()
+        voice_path = self._resolve_voice_with_fallback(voice, XVASynthAcronym, None, XVASynthModNexusLink)
 
         with open(voice_path+'.json', 'r', encoding='utf-8') as f:
             voice_model_json = json.load(f)
