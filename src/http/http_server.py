@@ -62,4 +62,6 @@ class http_server:
         # (e.g. Skyrim running on a different machine — Android handheld via
         # GameHub Wine — pointing its HttpHost at the server's LAN IP).
         # 127.0.0.1-only installs still work because 0.0.0.0 includes loopback.
-        uvicorn.run(self.__app, host="0.0.0.0", port=port)
+        # access_log=True so every HTTP request from the mod shows up — vital
+        # for diagnosing mod<->server issues when running on separate machines.
+        uvicorn.run(self.__app, host="0.0.0.0", port=port, access_log=True, log_level="info")
