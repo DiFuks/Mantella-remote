@@ -261,12 +261,25 @@ class GameStateManager:
     
     @utils.time_it
     def sentence_to_json(self, sentence_to_prepare: Sentence, topicID: int) -> dict[str, Any]:
+        # Report the physical voice folder the server actually wrote the .wav
+        # into, NOT the CSV-derived in_game_voice_model. With
+        # save_audio_data_to_character_folder=False (default) the server lumps
+        # every voiceline into "MantellaVoice00" — that's also where the
+        # Skyrim engine looks since the mod sets actor's voicetype to
+        # MantellaVoice00 before Topic.Say. Reporting the CSV model name
+        # (e.g. "MaleNord") sent the remote mod to a non-existent folder.
+        if getattr(self.__config, "save_audio_data_to_character_folder", False):
+            voice_folder = sentence_to_prepare.speaker.in_game_voice_model
+        else:
+            from src.games.gameable import Gameable
+            voice_folder = Gameable.MANTELLA_VOICE_FOLDER
+
         json_dict = {
             comm_consts.KEY_ACTOR_SPEAKER: sentence_to_prepare.speaker.name,
             comm_consts.KEY_ACTOR_LINETOSPEAK: self.__abbreviate_text(sentence_to_prepare.text.strip()),
             comm_consts.KEY_ACTOR_ISNARRATION: sentence_to_prepare.is_narration,
             comm_consts.KEY_ACTOR_VOICEFILE: sentence_to_prepare.voice_file,
-            comm_consts.KEY_ACTOR_VOICEFOLDER: sentence_to_prepare.speaker.in_game_voice_model,
+            comm_consts.KEY_ACTOR_VOICEFOLDER: voice_folder,
             comm_consts.KEY_ACTOR_DURATION: sentence_to_prepare.voice_line_duration,
             comm_consts.KEY_ACTOR_ACTIONS: sentence_to_prepare.actions,
             comm_consts.KEY_CONTINUECONVERSATION_TOPICINFOFILE: topicID
