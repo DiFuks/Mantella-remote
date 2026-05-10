@@ -52,6 +52,7 @@ class communication_constants:
     KEY_ACTOR_LINETOSPEAK: str = PREFIX + "actor_line_to_speak"
     KEY_ACTOR_ISNARRATION: str = PREFIX + "is_narration"
     KEY_ACTOR_VOICEFILE: str = PREFIX + "actor_voice_file"
+    KEY_ACTOR_VOICEFOLDER: str = PREFIX + "actor_voice_folder"
     KEY_ACTOR_DURATION: str = PREFIX + "actor_line_duration"
     KEY_ACTOR_ACTIONS: str = PREFIX + "actor_actions"
     KEY_ACTOR_ACTIONS_REQUIRE_RESPONSE: str = PREFIX + "actions_require_response"

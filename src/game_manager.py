@@ -266,6 +266,7 @@ class GameStateManager:
             comm_consts.KEY_ACTOR_LINETOSPEAK: self.__abbreviate_text(sentence_to_prepare.text.strip()),
             comm_consts.KEY_ACTOR_ISNARRATION: sentence_to_prepare.is_narration,
             comm_consts.KEY_ACTOR_VOICEFILE: sentence_to_prepare.voice_file,
+            comm_consts.KEY_ACTOR_VOICEFOLDER: sentence_to_prepare.speaker.in_game_voice_model,
             comm_consts.KEY_ACTOR_DURATION: sentence_to_prepare.voice_line_duration,
             comm_consts.KEY_ACTOR_ACTIONS: sentence_to_prepare.actions,
             comm_consts.KEY_CONTINUECONVERSATION_TOPICINFOFILE: topicID
